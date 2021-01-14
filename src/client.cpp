@@ -66,34 +66,6 @@ void * recv_thread(void *data) {
   pthread_exit(EXIT_SUCCESS); 
 }
 
-void a(int s) {
-	struct client_data *cdata = (struct client_data *)malloc(sizeof(*cdata));
-  if (!cdata) {
-    logexit("malloc");
-  }
-  cdata->csock = s;
-  struct sockaddr_storage cstorage;
-  memcpy(&(cdata->storage), &cstorage, sizeof(cstorage));
-	
-	// Leitura do teclado
-  pthread_t tid1;
-  pthread_create(&tid1, NULL, send_thread, cdata);
-}
-
-void b(int s) {
-	struct client_data *cdata = (struct client_data *)malloc(sizeof(*cdata));
-  if (!cdata) {
-    logexit("malloc");
-  }
-  cdata->csock = s;
-  struct sockaddr_storage cstorage;
-  memcpy(&(cdata->storage), &cstorage, sizeof(cstorage));
-
-	// Leitura do server
-  pthread_t tid2;
-  pthread_create(&tid2, NULL, recv_thread, cdata);
-}
-
 int main(int argc, char **argv) {
 	if (argc < 3) {
 		usage(argc, argv);
@@ -118,8 +90,19 @@ int main(int argc, char **argv) {
 
 	printf("connected to %s\n", addrstr);
 
-	a(s);
-	b(s);
+	struct client_data *cdata = (struct client_data *)malloc(sizeof(*cdata));
+  if (!cdata) {
+    logexit("malloc");
+  }
+  cdata->csock = s;
+  struct sockaddr_storage cstorage;
+  memcpy(&(cdata->storage), &cstorage, sizeof(cstorage));
+
+	pthread_t tid1;
+  pthread_create(&tid1, NULL, send_thread, cdata);
+
+	pthread_t tid2;
+  pthread_create(&tid2, NULL, recv_thread, cdata);
 
 	while(1) {}
 

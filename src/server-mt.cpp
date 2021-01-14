@@ -1,11 +1,12 @@
 #include "common.h"
 #include <pthread.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <string>
+#include <iostream>
 
 #define BUFSZ 1024
 
@@ -22,35 +23,56 @@ struct client_data {
   struct sockaddr_storage storage;
 };
 
-void * client_thread(void *data) {
-    struct client_data *cdata = (struct client_data *)data;
-    struct sockaddr *caddr = (struct sockaddr *)(&cdata->storage);
+int tratar_mensagem(char *buf) {
+  if (strcmp(buf, "##kill\n") == 0) {
+    exit(EXIT_SUCCESS);
+  }
 
-    char caddrstr[BUFSZ];
-    addrtostr(caddr, caddrstr, BUFSZ);
-    printf("[log] connection from %s\n", caddrstr);
+  string strbuf(buf);
+  char bufaux[BUFSZ];
 
-    char buf[BUFSZ];
-    size_t count;
-
-    while(1) {
-      memset(buf, 0, BUFSZ);
-      count = recv(cdata->csock, buf, BUFSZ - 1, 0);
-      printf("%s\n", buf);
-      memset(buf, 0, BUFSZ);
-      if (strcmp(buf, "##kill\n") == 0) {
-        exit(EXIT_SUCCESS);
+  for (int i = 0; i < strbuf.size(); i++) {
+    if (strbuf[i] == '+') {
+      int j = 0;
+      while (strbuf[i] != ' ' && strbuf[i] != '\n') {
+        bufaux[j] = strbuf[i];
+        i++;
+        j++;
       }
 
-      sprintf(buf, "< mensagem recebida\n");
-      count = send(cdata->csock, buf, strlen(buf) + 1, 0);
-      if (count != strlen(buf) + 1) {
-        logexit("send");
-      }
+      bufaux[j] = '\0';
+      sprintf(buf, "< subscribed %s\n", bufaux);
+      return 0;
     }
-    
-    close(cdata->csock);
-    pthread_exit(EXIT_SUCCESS);
+  }
+
+  return -1;
+}
+
+void * client_thread(void *data) {
+  struct client_data *cdata = (struct client_data *)data;
+  struct sockaddr *caddr = (struct sockaddr *)(&cdata->storage);
+
+  char caddrstr[BUFSZ];
+  addrtostr(caddr, caddrstr, BUFSZ);
+  printf("[log] connection from %s\n", caddrstr);
+
+  char buf[BUFSZ];
+  size_t count;
+
+  while(1) {
+    memset(buf, 0, BUFSZ);
+    count = recv(cdata->csock, buf, BUFSZ - 1, 0);
+    cout << buf << '\n';
+    tratar_mensagem(buf);
+    count = send(cdata->csock, buf, strlen(buf) + 1, 0);
+    if (count != strlen(buf) + 1) {
+      logexit("send");
+    }
+  }
+  
+  close(cdata->csock);
+  pthread_exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char **argv) {
