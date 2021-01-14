@@ -47,17 +47,19 @@ void * send_thread(void *data) {
 
 void * recv_thread(void *data) {
   struct client_data *cdata = (struct client_data *)data;
-  char buf[BUFSZ];
 	unsigned total;
 	size_t count;
 
   while(1) {
+  	char buf[BUFSZ];
 		memset(buf, 0, BUFSZ);
 		total = 0;
 		count = 0;
 		while(1) {
 			count = recv(cdata->csock, buf + total, BUFSZ - total, 0);
-			printf("%s", buf);
+			if (count != 0) {
+				printf("%s", buf+total);
+			}
 			total += count;
 			aberto = true;
 		}

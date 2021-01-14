@@ -23,30 +23,30 @@ struct client_data {
   struct sockaddr_storage storage;
 };
 
-int tratar_mensagem(char *buf) {
+void tratar_mensagem(char *buf) {
   if (strcmp(buf, "##kill\n") == 0) {
     exit(EXIT_SUCCESS);
   }
 
   string strbuf(buf);
   char bufaux[BUFSZ];
+  int j = 0;
 
   for (int i = 0; i < strbuf.size(); i++) {
     if (strbuf[i] == '+') {
-      int j = 0;
       while (strbuf[i] != ' ' && strbuf[i] != '\n') {
         bufaux[j] = strbuf[i];
         i++;
         j++;
       }
-
       bufaux[j] = '\0';
-      sprintf(buf, "< subscribed %s\n", bufaux);
-      return 0;
+      break;
     }
   }
 
-  return -1;
+  // cout << bufaux << "\n";
+
+  sprintf(buf, "< subscribed %s\n", bufaux);
 }
 
 void * client_thread(void *data) {
@@ -63,7 +63,6 @@ void * client_thread(void *data) {
   while(1) {
     memset(buf, 0, BUFSZ);
     count = recv(cdata->csock, buf, BUFSZ - 1, 0);
-    cout << buf << '\n';
     tratar_mensagem(buf);
     count = send(cdata->csock, buf, strlen(buf) + 1, 0);
     if (count != strlen(buf) + 1) {
