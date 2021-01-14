@@ -10,6 +10,7 @@
 
 using namespace std;
 #define BUFSZ 1024
+bool aberto = true;
 
 struct client_data {
   int csock;
@@ -29,11 +30,15 @@ void * send_thread(void *data) {
 
 	while(1) {
 		memset(buf, 0, BUFSZ);
-		printf("> ");
-		fgets(buf, BUFSZ-1, stdin);
-		count = send(cdata->csock, buf, strlen(buf)+1, 0);
-		if (count != strlen(buf)+1) {
-			logexit("send");
+		
+		if (aberto) {
+			aberto = false;
+			printf("> ");
+			fgets(buf, BUFSZ-1, stdin);
+			count = send(cdata->csock, buf, strlen(buf)+1, 0);
+			if (count != strlen(buf)+1) {
+				logexit("send");
+			}
 		}
 	}
 
@@ -52,7 +57,9 @@ void * recv_thread(void *data) {
 		count = 0;
 		while(1) {
 			count = recv(cdata->csock, buf + total, BUFSZ - total, 0);
+			printf("%s", buf);
 			total += count;
+			aberto = true;
 		}
   }
 
