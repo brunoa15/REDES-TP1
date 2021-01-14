@@ -60,7 +60,7 @@ string tratar_tag(char *buf, char sinal) {
   return bufaux;
 }
 
-void tratar_mensagem(char *buf) {
+string tratar_mensagem(char *buf) {
   if (strcmp(buf, "##kill\n") == 0) {
     exit(EXIT_SUCCESS);
   }
@@ -70,13 +70,19 @@ void tratar_mensagem(char *buf) {
   // string hashtag ;
 
   if (!subscribe.empty() && unsubscribe.empty()) {
-    sprintf(buf, "< subscribed %s\n", subscribe.c_str());
+    string buf_envio = "< subscribed ";
+    buf_envio += subscribe;
+    buf_envio += "\n";
+    return buf_envio;
   }
   if (subscribe.empty() && !unsubscribe.empty()) {
-    sprintf(buf, "< unsubscribed %s\n", unsubscribe.c_str());
+    string buf_envio = "< unsubscribed ";
+    buf_envio += unsubscribe;
+    buf_envio += "\n";
+    return buf_envio;
   }
 
-  // sprintf(buf, "< subscribed %s\n", bufaux);
+  return "";
 }
 
 void * client_thread(void *data) {
@@ -87,15 +93,17 @@ void * client_thread(void *data) {
   addrtostr(caddr, caddrstr, BUFSZ);
   printf("[log] connection from %s\n", caddrstr);
 
-  char buf[BUFSZ];
+  char buf_recebido[BUFSZ];
+  string buf_envio;
   size_t count;
 
   while(1) {
-    memset(buf, 0, BUFSZ);
-    count = recv(cdata->csock, buf, BUFSZ - 1, 0);
-    tratar_mensagem(buf);
-    count = send(cdata->csock, buf, strlen(buf) + 1, 0);
-    if (count != strlen(buf) + 1) {
+    memset(buf_recebido, 0, BUFSZ);
+    count = recv(cdata->csock, buf_recebido, BUFSZ - 1, 0);
+    buf_envio = tratar_mensagem(buf_recebido);
+    
+    count = send(cdata->csock, buf_envio.c_str(), buf_envio.size() + 1, 0);
+    if (count != buf_envio.size() + 1) {
       logexit("send");
     }
   }
