@@ -1,6 +1,6 @@
 #include "common.h"
 #include <pthread.h>
-#include <stdlib.h>
+// #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -23,30 +23,60 @@ struct client_data {
   struct sockaddr_storage storage;
 };
 
+bool checar_ascii(char c) {
+  if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) {
+    return true;
+  }
+
+  return false;
+}
+
+string tratar_tag(char *buf, char sinal) {
+  string strbuf(buf);
+  string bufaux;
+
+  if (strbuf[0] != sinal || !checar_ascii(strbuf[1])) {
+    bufaux.clear();
+    return bufaux;
+  }
+
+  bufaux += strbuf[0];
+  bufaux += strbuf[1];
+  for (int i = 2; i < strbuf.size(); i++) {
+    if (strbuf[i] == '\n') {
+      // caso de sucesso
+      return bufaux;
+    }
+    
+    if (!checar_ascii(strbuf[i])) {
+      bufaux.clear();
+      return bufaux;
+    }
+
+    bufaux += strbuf[i];
+  }
+
+  bufaux.clear();
+  return bufaux;
+}
+
 void tratar_mensagem(char *buf) {
   if (strcmp(buf, "##kill\n") == 0) {
     exit(EXIT_SUCCESS);
   }
 
-  string strbuf(buf);
-  char bufaux[BUFSZ];
-  int j = 0;
+  string subscribe = tratar_tag(buf, '+');
+  string unsubscribe = tratar_tag(buf, '-');
+  // string hashtag ;
 
-  for (int i = 0; i < strbuf.size(); i++) {
-    if (strbuf[i] == '+') {
-      while (strbuf[i] != ' ' && strbuf[i] != '\n') {
-        bufaux[j] = strbuf[i];
-        i++;
-        j++;
-      }
-      bufaux[j] = '\0';
-      break;
-    }
+  if (!subscribe.empty() && unsubscribe.empty()) {
+    sprintf(buf, "< subscribed %s\n", subscribe.c_str());
+  }
+  if (subscribe.empty() && !unsubscribe.empty()) {
+    sprintf(buf, "< unsubscribed %s\n", unsubscribe.c_str());
   }
 
-  // cout << bufaux << "\n";
-
-  sprintf(buf, "< subscribed %s\n", bufaux);
+  // sprintf(buf, "< subscribed %s\n", bufaux);
 }
 
 void * client_thread(void *data) {
