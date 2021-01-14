@@ -1,12 +1,13 @@
 #include "common.h"
 #include <pthread.h>
-// #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <string>
 #include <iostream>
+#include <map>
+#include <set>
 
 #define BUFSZ 1024
 
@@ -23,11 +24,26 @@ struct client_data {
   struct sockaddr_storage storage;
 };
 
+map<char *, set<string> > tags_clientes;
+
+bool checar_map_tags(char *caddrstr, string tag, int acao) {
+  if (acao == 0) {
+    if (tags_clientes[caddrstr].count(tag)) {
+      return false;
+    }
+    return true;
+  }
+  
+  if (tags_clientes[caddrstr].count(tag)) {
+    return false;
+  }
+  return true;
+}
+
 bool checar_ascii(char c) {
   if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) {
     return true;
   }
-
   return false;
 }
 
@@ -40,7 +56,6 @@ string tratar_tag(char *buf, char sinal) {
     return bufaux;
   }
 
-  bufaux += strbuf[0];
   bufaux += strbuf[1];
   for (int i = 2; i < strbuf.size(); i++) {
     if (strbuf[i] == '\n') {
@@ -60,7 +75,7 @@ string tratar_tag(char *buf, char sinal) {
   return bufaux;
 }
 
-string tratar_mensagem(char *buf) {
+string tratar_mensagem(char *buf, char *caddrstr) {
   if (strcmp(buf, "##kill\n") == 0) {
     exit(EXIT_SUCCESS);
   }
@@ -70,13 +85,22 @@ string tratar_mensagem(char *buf) {
   // string hashtag ;
 
   if (!subscribe.empty() && unsubscribe.empty()) {
-    string buf_envio = "< subscribed ";
-    buf_envio += subscribe;
-    buf_envio += "\n";
+    string buf_envio;
+    
+    if (checar_map_tags(caddrstr, subscribe, 0)) {
+      buf_envio = "< subscribed +";
+      buf_envio += subscribe;
+      buf_envio += "\n";
+    } else {
+      buf_envio = "< already subscribed +";
+      buf_envio += subscribe;
+      buf_envio += "\n";
+    }
+
     return buf_envio;
   }
   if (subscribe.empty() && !unsubscribe.empty()) {
-    string buf_envio = "< unsubscribed ";
+    string buf_envio = "< unsubscribed -";
     buf_envio += unsubscribe;
     buf_envio += "\n";
     return buf_envio;
@@ -93,6 +117,9 @@ void * client_thread(void *data) {
   addrtostr(caddr, caddrstr, BUFSZ);
   printf("[log] connection from %s\n", caddrstr);
 
+  set<string> tags;
+  tags_clientes.insert(make_pair(caddrstr, tags));
+
   char buf_recebido[BUFSZ];
   string buf_envio;
   size_t count;
@@ -100,7 +127,7 @@ void * client_thread(void *data) {
   while(1) {
     memset(buf_recebido, 0, BUFSZ);
     count = recv(cdata->csock, buf_recebido, BUFSZ - 1, 0);
-    buf_envio = tratar_mensagem(buf_recebido);
+    buf_envio = tratar_mensagem(buf_recebido, caddrstr);
     
     count = send(cdata->csock, buf_envio.c_str(), buf_envio.size() + 1, 0);
     if (count != buf_envio.size() + 1) {
