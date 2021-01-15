@@ -48,6 +48,28 @@ bool checar_ascii(char c) {
   return false;
 }
 
+void enviar_mensagens(string hashtag) {
+  cout << hashtag << endl;
+}
+
+void buscar_hashtags(char *buf) {
+  string strbuf(buf);
+  string bufaux;
+  for (int i=0; i<strbuf.size(); i++) {
+    if (strbuf[i] == '#') {
+      i++;
+      while (checar_ascii(strbuf[i])) {
+        bufaux += strbuf[i];
+        i++;
+      }
+      if (strbuf[i] == ' ' || strbuf[i] == '\n') {
+        enviar_mensagens(bufaux);
+      }
+      bufaux.clear();
+    }
+  }
+}
+
 string tratar_tag(char *buf, char sinal) {
   string strbuf(buf);
   string bufaux;
@@ -58,7 +80,7 @@ string tratar_tag(char *buf, char sinal) {
   }
 
   bufaux += strbuf[1];
-  for (int i = 2; i < strbuf.size(); i++) {
+  for (int i = 2; i<strbuf.size(); i++) {
     if (strbuf[i] == '\n') {
       // caso de sucesso
       return bufaux;
@@ -83,7 +105,7 @@ string tratar_mensagem(char *buf, int csock) {
 
   string subscribe = tratar_tag(buf, '+');
   string unsubscribe = tratar_tag(buf, '-');
-  // string hashtag ;
+  buscar_hashtags(buf);
 
   if (!subscribe.empty() && unsubscribe.empty()) {
     string buf_envio;
