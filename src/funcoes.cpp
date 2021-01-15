@@ -2,8 +2,10 @@
 #include <map>
 #include <set>
 #include <string>
+#include <cstring>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 using namespace std;
 
