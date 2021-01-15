@@ -129,5 +129,5 @@ string tratar_mensagem(char *buf, int csock) {
     return buf_envio;
   }
 
-  return "";
+  return " ";
 }
