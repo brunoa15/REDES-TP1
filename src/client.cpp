@@ -57,7 +57,7 @@ void * recv_thread(void *data) {
 		count = 0;
 		while(1) {
 			count = recv(cdata->csock, buf + total, BUFSZ - total, 0);
-			if (count != 0) {
+			if (count > 1) {
 				printf("< %s", buf+total);
 			}
 			total += count;
