@@ -48,8 +48,17 @@ bool checar_ascii(char c) {
   return false;
 }
 
-void enviar_mensagens(set<string> hashtags, string mensagem, int csock) {
-  send(csock, mensagem.c_str(), mensagem.size(), 0);
+void enviar_mensagens(set<string> hashtags, string mensagem, int csock_autor) {
+  map<int, set<string> >::iterator i;
+  set<string>::iterator j;
+  for (i = tags_clientes.begin(); i != tags_clientes.end(); i++) {
+    for (j = hashtags.begin(); j != hashtags.end(); j++) {
+      if (i->second.count(*j) && i->first != csock_autor) {
+        send(i->first, mensagem.c_str(), mensagem.size(), 0);
+        break;
+      }
+    }
+  }
 }
 
 void buscar_hashtags(char *buf, int csock) {
