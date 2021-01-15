@@ -94,6 +94,10 @@ string tratar_tag(char *buf, char sinal) {
 
 string tratar_mensagem(char *buf, int csock) {
   if (strcmp(buf, "##kill\n") == 0) {
+    map<int, set<string> >::iterator i;
+    for (i = tags_clientes.begin(); i != tags_clientes.end(); i++) {
+      close(i->first);
+    }
     exit(EXIT_SUCCESS);
   }
 
