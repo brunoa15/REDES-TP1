@@ -32,7 +32,7 @@ void * send_thread(void *data) {
 		memset(buf, 0, BUFSZ);
 		
 		if (aberto) {
-			printf("> ");
+			printf("\b\b> ");
 			fgets(buf, BUFSZ-1, stdin);
 			count = send(cdata->csock, buf, strlen(buf)+1, 0);
 			if (count != strlen(buf)+1) {
@@ -58,7 +58,10 @@ void * recv_thread(void *data) {
 		while(1) {
 			count = recv(cdata->csock, buf + total, BUFSZ - total, 0);
 			if (count > 1) {
+				printf("\b\b");
 				printf("< %s", buf+total);
+				printf("> ");
+				fflush(stdout);
 			}
 			total += count;
 			aberto = true;
