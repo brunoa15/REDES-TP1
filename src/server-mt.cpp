@@ -31,13 +31,14 @@ bool checar_map_tags(char *caddrstr, string tag, int acao) {
     if (tags_clientes[caddrstr].count(tag)) {
       return false;
     }
+    tags_clientes[caddrstr].insert(tag);
     return true;
   }
-  
   if (tags_clientes[caddrstr].count(tag)) {
-    return false;
+    tags_clientes[caddrstr].erase(tag);
+    return true;
   }
-  return true;
+  return false;
 }
 
 bool checar_ascii(char c) {
@@ -86,23 +87,29 @@ string tratar_mensagem(char *buf, char *caddrstr) {
 
   if (!subscribe.empty() && unsubscribe.empty()) {
     string buf_envio;
-    
     if (checar_map_tags(caddrstr, subscribe, 0)) {
-      buf_envio = "< subscribed +";
+      buf_envio = "subscribed +";
       buf_envio += subscribe;
       buf_envio += "\n";
     } else {
-      buf_envio = "< already subscribed +";
+      buf_envio = "already subscribed +";
       buf_envio += subscribe;
       buf_envio += "\n";
     }
-
     return buf_envio;
   }
+
   if (subscribe.empty() && !unsubscribe.empty()) {
-    string buf_envio = "< unsubscribed -";
-    buf_envio += unsubscribe;
-    buf_envio += "\n";
+    string buf_envio;
+    if(checar_map_tags(caddrstr, unsubscribe, 1)) {
+      buf_envio = "unsubscribed -";
+      buf_envio += unsubscribe;
+      buf_envio += "\n";
+    } else {
+      buf_envio = "not subscribed -";
+      buf_envio += unsubscribe;
+      buf_envio += "\n";
+    }
     return buf_envio;
   }
 

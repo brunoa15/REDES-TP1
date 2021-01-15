@@ -58,7 +58,7 @@ void * recv_thread(void *data) {
 		while(1) {
 			count = recv(cdata->csock, buf + total, BUFSZ - total, 0);
 			if (count != 0) {
-				printf("%s", buf+total);
+				printf("< %s", buf+total);
 			}
 			total += count;
 			aberto = true;
