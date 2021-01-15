@@ -50,7 +50,7 @@ void buscar_hashtags(char *buf, int csock) {
   string strbuf(buf);
   string bufaux;
   set<string> hashtags;
-  for (int i=0; i<strbuf.size(); i++) {
+  for (unsigned long int i=0; i<strbuf.size(); i++) {
     if (strbuf[i] == '#') {
       i++;
       while (checar_ascii(strbuf[i])) {
@@ -76,7 +76,7 @@ string tratar_tag(char *buf, char sinal) {
     return bufaux;
   }
   bufaux += strbuf[1];
-  for (int i = 2; i<strbuf.size(); i++) {
+  for (unsigned long int i = 2; i<strbuf.size(); i++) {
     if (strbuf[i] == '\n') {
       // caso de sucesso
       return bufaux;
