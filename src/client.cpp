@@ -32,13 +32,13 @@ void * send_thread(void *data) {
 		memset(buf, 0, BUFSZ);
 		
 		if (aberto) {
-			aberto = false;
 			printf("> ");
 			fgets(buf, BUFSZ-1, stdin);
 			count = send(cdata->csock, buf, strlen(buf)+1, 0);
 			if (count != strlen(buf)+1) {
 				logexit("send");
 			}
+			aberto = false;
 		}
 	}
 

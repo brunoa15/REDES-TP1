@@ -9,7 +9,7 @@
 #include <map>
 #include <set>
 
-#define BUFSZ 1024
+#define BUFSZ 500
 
 using namespace std;
 
@@ -48,13 +48,14 @@ bool checar_ascii(char c) {
   return false;
 }
 
-void enviar_mensagens(string hashtag) {
-  cout << hashtag << endl;
+void enviar_mensagens(set<string> hashtags, string mensagem, int csock) {
+  send(csock, mensagem.c_str(), mensagem.size(), 0);
 }
 
-void buscar_hashtags(char *buf) {
+void buscar_hashtags(char *buf, int csock) {
   string strbuf(buf);
   string bufaux;
+  set<string> hashtags;
   for (int i=0; i<strbuf.size(); i++) {
     if (strbuf[i] == '#') {
       i++;
@@ -63,10 +64,13 @@ void buscar_hashtags(char *buf) {
         i++;
       }
       if (strbuf[i] == ' ' || strbuf[i] == '\n') {
-        enviar_mensagens(bufaux);
+        hashtags.insert(bufaux);
       }
       bufaux.clear();
     }
+  }
+  if (!hashtags.empty()) {
+    enviar_mensagens(hashtags, strbuf, csock);
   }
 }
 
@@ -105,7 +109,7 @@ string tratar_mensagem(char *buf, int csock) {
 
   string subscribe = tratar_tag(buf, '+');
   string unsubscribe = tratar_tag(buf, '-');
-  buscar_hashtags(buf);
+  buscar_hashtags(buf, csock);
 
   if (!subscribe.empty() && unsubscribe.empty()) {
     string buf_envio;
