@@ -24,18 +24,18 @@ struct client_data {
   struct sockaddr_storage storage;
 };
 
-map<char *, set<string> > tags_clientes;
+map<int, set<string> > tags_clientes;
 
-bool checar_map_tags(char *caddrstr, string tag, int acao) {
+bool checar_map_tags(int csock, string tag, int acao) {
   if (acao == 0) {
-    if (tags_clientes[caddrstr].count(tag)) {
+    if (tags_clientes[csock].count(tag)) {
       return false;
     }
-    tags_clientes[caddrstr].insert(tag);
+    tags_clientes[csock].insert(tag);
     return true;
   }
-  if (tags_clientes[caddrstr].count(tag)) {
-    tags_clientes[caddrstr].erase(tag);
+  if (tags_clientes[csock].count(tag)) {
+    tags_clientes[csock].erase(tag);
     return true;
   }
   return false;
@@ -76,7 +76,7 @@ string tratar_tag(char *buf, char sinal) {
   return bufaux;
 }
 
-string tratar_mensagem(char *buf, char *caddrstr) {
+string tratar_mensagem(char *buf, int csock) {
   if (strcmp(buf, "##kill\n") == 0) {
     exit(EXIT_SUCCESS);
   }
@@ -87,7 +87,7 @@ string tratar_mensagem(char *buf, char *caddrstr) {
 
   if (!subscribe.empty() && unsubscribe.empty()) {
     string buf_envio;
-    if (checar_map_tags(caddrstr, subscribe, 0)) {
+    if (checar_map_tags(csock, subscribe, 0)) {
       buf_envio = "subscribed +";
       buf_envio += subscribe;
       buf_envio += "\n";
@@ -101,7 +101,7 @@ string tratar_mensagem(char *buf, char *caddrstr) {
 
   if (subscribe.empty() && !unsubscribe.empty()) {
     string buf_envio;
-    if(checar_map_tags(caddrstr, unsubscribe, 1)) {
+    if(checar_map_tags(csock, unsubscribe, 1)) {
       buf_envio = "unsubscribed -";
       buf_envio += unsubscribe;
       buf_envio += "\n";
@@ -125,7 +125,7 @@ void * client_thread(void *data) {
   printf("[log] connection from %s\n", caddrstr);
 
   set<string> tags;
-  tags_clientes.insert(make_pair(caddrstr, tags));
+  tags_clientes.insert(make_pair(cdata->csock, tags));
 
   char buf_recebido[BUFSZ];
   string buf_envio;
@@ -134,7 +134,7 @@ void * client_thread(void *data) {
   while(1) {
     memset(buf_recebido, 0, BUFSZ);
     count = recv(cdata->csock, buf_recebido, BUFSZ - 1, 0);
-    buf_envio = tratar_mensagem(buf_recebido, caddrstr);
+    buf_envio = tratar_mensagem(buf_recebido, cdata->csock);
     
     count = send(cdata->csock, buf_envio.c_str(), buf_envio.size() + 1, 0);
     if (count != buf_envio.size() + 1) {
