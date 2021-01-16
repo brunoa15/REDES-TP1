@@ -44,7 +44,6 @@ void * client_thread(void *data) {
     memset(buf_recebido, 0, BUFSZ);
     count = recv(cdata->csock, buf_recebido, BUFSZ - 1, 0);
     buf_envio = tratar_mensagem(buf_recebido, cdata->csock);
-    
     count = send(cdata->csock, buf_envio.c_str(), buf_envio.size(), 0);
     if (count != buf_envio.size()) {
       logexit("send");
